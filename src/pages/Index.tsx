@@ -1,36 +1,37 @@
 import { useState, useEffect, useRef } from "react";
 
 const COUPLE = {
-  him: "Александр",
-  her: "Елизавета",
-  date: "14 сентября 2026",
-  venue: "Grand Palace Ballroom",
-  address: "Москва, Тверская ул., 28",
+  him: "Владислав",
+  her: "Анастасия",
+  date: "1 июля 2026",
+  dateShort: "01.07.2026",
+  venue: "«Ты Где»",
+  address: "Уточните адрес у организаторов",
 };
 
-const WEDDING_DATE = new Date("2026-09-14T18:00:00");
+const WEDDING_DATE = new Date("2026-07-01T17:00:00");
 
 const GALLERY = [
   {
-    src: "https://cdn.poehali.dev/projects/7a5ac2a2-443d-4bbd-ba61-bc31852543f6/files/4ed067b7-d784-4268-aa44-0145093249c1.jpg",
-    caption: "Мы",
+    src: "https://cdn.poehali.dev/projects/7a5ac2a2-443d-4bbd-ba61-bc31852543f6/files/0b31728f-de84-489d-a590-7d4d722fc372.jpg",
+    caption: "Наша история",
   },
   {
-    src: "https://cdn.poehali.dev/projects/7a5ac2a2-443d-4bbd-ba61-bc31852543f6/files/25fc7b93-c809-41c6-ab66-9155835048e1.jpg",
-    caption: "Церемония",
+    src: "https://cdn.poehali.dev/projects/7a5ac2a2-443d-4bbd-ba61-bc31852543f6/files/e0b57bdb-d46d-4c3e-a767-466dc8b3c481.jpg",
+    caption: "Летняя церемония",
   },
   {
-    src: "https://cdn.poehali.dev/projects/7a5ac2a2-443d-4bbd-ba61-bc31852543f6/files/9b907b9d-b945-4c4f-9c03-bd7d7761b09e.jpg",
-    caption: "Банкет",
+    src: "https://cdn.poehali.dev/projects/7a5ac2a2-443d-4bbd-ba61-bc31852543f6/files/cd84ea0e-afbf-426a-a101-52a979c6417f.jpg",
+    caption: "Вечер для вас",
   },
 ];
 
 const SCHEDULE = [
-  { time: "17:00", event: "Сбор гостей", icon: "✦" },
-  { time: "18:00", event: "Церемония", icon: "♢" },
-  { time: "19:00", event: "Коктейльный час", icon: "◇" },
-  { time: "20:00", event: "Торжественный ужин", icon: "✦" },
-  { time: "23:00", event: "Танцевальная ночь", icon: "♢" },
+  { time: "16:00", event: "Сбор гостей", desc: "Добро пожаловать" },
+  { time: "17:00", event: "Церемония", desc: "Обмен клятвами" },
+  { time: "18:00", event: "Фуршет", desc: "Шампанское и закуски" },
+  { time: "19:00", event: "Торжественный ужин", desc: "Банкетный зал" },
+  { time: "22:00", event: "Танцы", desc: "До рассвета" },
 ];
 
 function useCountdown() {
@@ -38,7 +39,7 @@ function useCountdown() {
   useEffect(() => {
     const tick = () => {
       const diff = WEDDING_DATE.getTime() - Date.now();
-      if (diff <= 0) return;
+      if (diff <= 0) { setTime({ days: 0, hours: 0, minutes: 0, seconds: 0 }); return; }
       setTime({
         days: Math.floor(diff / 86400000),
         hours: Math.floor((diff % 86400000) / 3600000),
@@ -55,517 +56,648 @@ function useCountdown() {
 
 function useReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll(".lx-reveal");
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("lx-revealed")),
-      { threshold: 0.1 }
-    );
-    els.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
+    const run = () => {
+      const els = document.querySelectorAll(".om-reveal:not(.om-revealed)");
+      const obs = new IntersectionObserver(
+        (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("om-revealed")),
+        { threshold: 0.1 }
+      );
+      els.forEach((el) => obs.observe(el));
+      return () => obs.disconnect();
+    };
+    const t = setTimeout(run, 50);
+    return () => clearTimeout(t);
   }, []);
-}
-
-function Particles() {
-  const items = useRef(
-    Array.from({ length: 18 }, () => ({
-      left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 8}s`,
-      duration: `${6 + Math.random() * 6}s`,
-      size: `${1 + Math.random() * 2}px`,
-      opacity: 0.3 + Math.random() * 0.4,
-    }))
-  );
-  return (
-    <div className="particles" aria-hidden>
-      {items.current.map((p, i) => (
-        <span key={i} className="particle" style={{
-          left: p.left, animationDelay: p.delay, animationDuration: p.duration,
-          width: p.size, height: p.size, opacity: p.opacity,
-        }} />
-      ))}
-    </div>
-  );
 }
 
 function CalendarWidget() {
   const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-  const firstDay = new Date(2026, 8, 1).getDay();
+  // July 2026: starts on Wednesday (3rd day, offset=2)
+  const firstDay = new Date(2026, 6, 1).getDay();
   const offset = firstDay === 0 ? 6 : firstDay - 1;
-  const total = 30;
+  const total = 31;
   const cells: (number | null)[] = [];
   for (let i = 0; i < offset; i++) cells.push(null);
   for (let i = 1; i <= total; i++) cells.push(i);
+
   return (
-    <div className="lx-cal">
-      <div className="lx-cal-month">Сентябрь 2026</div>
-      <div className="lx-cal-head">{days.map((d) => <div key={d} className="lx-cal-dh">{d}</div>)}</div>
-      <div className="lx-cal-grid">
+    <div className="om-cal">
+      <div className="om-cal-ornament">
+        <span className="om-cal-line" /><span className="om-cal-gem">◆</span><span className="om-cal-line" />
+      </div>
+      <div className="om-cal-month">Июль 2026</div>
+      <div className="om-cal-head">{days.map((d) => <div key={d} className="om-cal-dh">{d}</div>)}</div>
+      <div className="om-cal-grid">
         {cells.map((d, i) => (
-          <div key={i} className={`lx-cal-cell ${d === 14 ? "lx-cal-wday" : ""} ${!d ? "lx-cal-empty" : ""}`}>
+          <div key={i} className={`om-cal-cell ${d === 1 ? "om-cal-wday" : ""} ${!d ? "om-cal-empty" : ""}`}>
             {d}
-            {d === 14 && <span className="lx-cal-star">✦</span>}
+            {d === 1 && <span className="om-cal-heart">♥</span>}
           </div>
         ))}
       </div>
-      <button className="lx-cal-add">+ Добавить в календарь</button>
+      <button className="om-cal-btn">Добавить в календарь</button>
+    </div>
+  );
+}
+
+function MusicPlayer() {
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const toggle = () => {
+    if (!audioRef.current) return;
+    if (playing) { audioRef.current.pause(); } else { audioRef.current.play().catch(() => {}); }
+    setPlaying(!playing);
+  };
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onTime = () => setProgress((audio.currentTime / (audio.duration || 1)) * 100);
+    const onEnd = () => setPlaying(false);
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("ended", onEnd);
+    return () => { audio.removeEventListener("timeupdate", onTime); audio.removeEventListener("ended", onEnd); };
+  }, []);
+
+  return (
+    <div className="om-music">
+      <audio ref={audioRef} src="" preload="none" />
+      <span className="om-music-note" style={{ animation: playing ? "om-note 1.5s ease-in-out infinite" : "none" }}>♪</span>
+      <div className="om-music-info">
+        <span className="om-music-title">Наша мелодия</span>
+        <div className="om-music-bar"><div className="om-music-fill" style={{ width: `${progress}%` }} /></div>
+      </div>
+      <button className="om-music-btn" onClick={toggle}>{playing ? "⏸" : "▶"}</button>
     </div>
   );
 }
 
 const Index = () => {
   const time = useCountdown();
-  const [idx, setIdx] = useState(0);
+  const [gIdx, setGIdx] = useState(0);
   const [rsvp, setRsvp] = useState<string | null>(null);
   useReveal();
 
+  const prev = () => setGIdx((i) => (i - 1 + GALLERY.length) % GALLERY.length);
+  const next = () => setGIdx((i) => (i + 1) % GALLERY.length);
+
   return (
-    <div className="lx-root">
+    <div className="om-root">
 
       {/* ── HERO ── */}
-      <section className="lx-hero">
-        <Particles />
-        <div className="lx-hero-bg" style={{ backgroundImage: `url(${GALLERY[0].src})` }} />
-        <div className="lx-hero-veil" />
-        <div className="lx-hero-body">
-          <div className="lx-tag lx-reveal">Wedding Invitation</div>
-          <div className="lx-divider lx-reveal"><span className="lx-dl" /><span className="lx-ds">✦</span><span className="lx-dl" /></div>
-          <h1 className="lx-hero-title lx-reveal">
-            <span className="lx-name">{COUPLE.him}</span>
-            <span className="lx-amp">&</span>
-            <span className="lx-name">{COUPLE.her}</span>
-          </h1>
-          <div className="lx-divider lx-reveal"><span className="lx-dl" /><span className="lx-ds">✦</span><span className="lx-dl" /></div>
-          <p className="lx-hero-date lx-reveal">{COUPLE.date}</p>
-          <p className="lx-hero-venue lx-reveal">{COUPLE.venue}</p>
-          <div className="lx-hero-scroll lx-reveal">
-            <span className="lx-scroll-line" />
-            <span className="lx-scroll-dot" />
+      <section className="om-hero">
+        <div className="om-hero-bg" style={{ backgroundImage: `url(${GALLERY[0].src})` }} />
+        <div className="om-hero-veil" />
+
+        {/* Угловые декоры */}
+        <div className="om-corner om-corner-tl" />
+        <div className="om-corner om-corner-tr" />
+        <div className="om-corner om-corner-bl" />
+        <div className="om-corner om-corner-br" />
+
+        <div className="om-hero-body">
+          <p className="om-hero-tag om-reveal">Приглашение на бракосочетание</p>
+
+          <div className="om-hero-orn om-reveal">
+            <span className="om-hl" /><span className="om-hd">✦</span><span className="om-hl" />
+          </div>
+
+          <div className="om-hero-names om-reveal">
+            <span className="om-hero-name">{COUPLE.him}</span>
+            <span className="om-hero-amp">&</span>
+            <span className="om-hero-name">{COUPLE.her}</span>
+          </div>
+
+          <div className="om-hero-orn om-reveal">
+            <span className="om-hl" /><span className="om-hd">✦</span><span className="om-hl" />
+          </div>
+
+          <p className="om-hero-date om-reveal">{COUPLE.date}</p>
+          <p className="om-hero-venue om-reveal">{COUPLE.venue}</p>
+
+          <div className="om-hero-scroll om-reveal">
+            <span className="om-scroll-line" />
+            <span className="om-scroll-label">прокрутите</span>
           </div>
         </div>
       </section>
 
-      {/* ── COUNTDOWN ── */}
-      <section className="lx-count-section">
-        <p className="lx-section-tag lx-reveal">До торжества</p>
-        <div className="lx-countdown lx-reveal">
+      {/* Плеер */}
+      <MusicPlayer />
+
+      {/* ── ТАЙМЕР ── */}
+      <section className="om-band om-count-band">
+        <p className="om-band-label om-reveal">До торжества</p>
+        <div className="om-countdown om-reveal">
           {[
             { v: time.days, l: "дней" },
             { v: time.hours, l: "часов" },
             { v: time.minutes, l: "минут" },
             { v: time.seconds, l: "секунд" },
           ].map(({ v, l }, i) => (
-            <div key={l} className="lx-count-item">
-              {i > 0 && <span className="lx-count-sep">:</span>}
-              <div className="lx-count-box">
-                <span className="lx-count-num">{String(v).padStart(2, "0")}</span>
-                <span className="lx-count-lbl">{l}</span>
+            <div key={l} className="om-count-wrap">
+              {i > 0 && <span className="om-count-colon">·</span>}
+              <div className="om-count-box">
+                <span className="om-count-num">{String(v).padStart(2, "0")}</span>
+                <span className="om-count-lbl">{l}</span>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── GALLERY ── */}
-      <section className="lx-section lx-gallery-section">
-        <div className="lx-section-header lx-reveal">
-          <div className="lx-divider"><span className="lx-dl" /><span className="lx-ds">✦</span><span className="lx-dl" /></div>
-          <h2 className="lx-section-title">Галерея</h2>
+      {/* ── ИСТОРИЯ ── */}
+      <section className="om-section">
+        <div className="om-sec-orn om-reveal">
+          <span className="om-ol" /><span className="om-od">◆</span><span className="om-ol" />
         </div>
-        <div className="lx-gallery lx-reveal">
-          <div className="lx-gal-main">
-            <img key={idx} src={GALLERY[idx].src} alt={GALLERY[idx].caption} className="lx-gal-img" />
-            <div className="lx-gal-overlay">
-              <span className="lx-gal-caption">{GALLERY[idx].caption}</span>
-              <div className="lx-gal-nav">
-                <button className="lx-gal-btn" onClick={() => setIdx((i) => (i - 1 + GALLERY.length) % GALLERY.length)}>‹</button>
-                <div className="lx-gal-dots">
-                  {GALLERY.map((_, i) => <button key={i} className={`lx-dot ${i === idx ? "lx-dot-active" : ""}`} onClick={() => setIdx(i)} />)}
-                </div>
-                <button className="lx-gal-btn" onClick={() => setIdx((i) => (i + 1) % GALLERY.length)}>›</button>
-              </div>
-            </div>
+        <h2 className="om-sec-title om-reveal">Наша история</h2>
+        <div className="om-story om-reveal">
+          <p>Есть встречи, которые меняют всё. Владислав и Анастасия знают об этом не понаслышке — однажды судьба свела их вместе, и с тех пор каждый день стал особенным.</p>
+          <p>Первое июля 2026 года станет началом нашей общей главы. Мы хотим встретить этот день в окружении самых близких.</p>
+        </div>
+        <p className="om-story-sig om-reveal">Владислав & Анастасия</p>
+      </section>
+
+      {/* ── ГАЛЕРЕЯ ── */}
+      <section className="om-band om-gallery-band">
+        <div className="om-sec-orn om-reveal">
+          <span className="om-ol" /><span className="om-od">◆</span><span className="om-ol" />
+        </div>
+        <h2 className="om-sec-title om-reveal">Галерея</h2>
+        <div className="om-gallery om-reveal">
+          <button className="om-garrow" onClick={prev}>‹</button>
+          <div className="om-gal-frame">
+            <img key={gIdx} src={GALLERY[gIdx].src} alt={GALLERY[gIdx].caption} className="om-gal-img" />
+            <div className="om-gal-cap">{GALLERY[gIdx].caption}</div>
           </div>
-          <div className="lx-gal-thumbs">
-            {GALLERY.map((g, i) => (
-              <button key={i} className={`lx-thumb ${i === idx ? "lx-thumb-active" : ""}`} onClick={() => setIdx(i)}>
-                <img src={g.src} alt={g.caption} />
-              </button>
-            ))}
-          </div>
+          <button className="om-garrow" onClick={next}>›</button>
+        </div>
+        <div className="om-gdots om-reveal">
+          {GALLERY.map((_, i) => (
+            <button key={i} className={`om-gdot ${i === gIdx ? "om-gdot-on" : ""}`} onClick={() => setGIdx(i)} />
+          ))}
         </div>
       </section>
 
-      {/* ── SCHEDULE ── */}
-      <section className="lx-section lx-sch-section">
-        <div className="lx-section-header lx-reveal">
-          <div className="lx-divider"><span className="lx-dl" /><span className="lx-ds">✦</span><span className="lx-dl" /></div>
-          <h2 className="lx-section-title">Программа вечера</h2>
+      {/* ── ПРОГРАММА ── */}
+      <section className="om-section">
+        <div className="om-sec-orn om-reveal">
+          <span className="om-ol" /><span className="om-od">◆</span><span className="om-ol" />
         </div>
-        <div className="lx-sch-list">
+        <h2 className="om-sec-title om-reveal">Программа дня</h2>
+        <div className="om-schedule">
           {SCHEDULE.map((item, i) => (
-            <div key={i} className="lx-sch-row lx-reveal">
-              <span className="lx-sch-icon">{item.icon}</span>
-              <span className="lx-sch-time">{item.time}</span>
-              <span className="lx-sch-sep" />
-              <span className="lx-sch-event">{item.event}</span>
+            <div key={i} className="om-sch-row om-reveal">
+              <span className="om-sch-time">{item.time}</span>
+              <div className="om-sch-middle">
+                <div className="om-sch-dot" />
+                {i < SCHEDULE.length - 1 && <div className="om-sch-vline" />}
+              </div>
+              <div className="om-sch-info">
+                <span className="om-sch-event">{item.event}</span>
+                <span className="om-sch-desc">{item.desc}</span>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── CALENDAR ── */}
-      <section className="lx-section">
-        <div className="lx-section-header lx-reveal">
-          <div className="lx-divider"><span className="lx-dl" /><span className="lx-ds">✦</span><span className="lx-dl" /></div>
-          <h2 className="lx-section-title">Дата</h2>
+      {/* ── КАЛЕНДАРЬ ── */}
+      <section className="om-band om-cal-band">
+        <div className="om-sec-orn om-reveal">
+          <span className="om-ol" /><span className="om-od">◆</span><span className="om-ol" />
         </div>
-        <div className="lx-reveal"><CalendarWidget /></div>
+        <h2 className="om-sec-title om-reveal">Дата свадьбы</h2>
+        <div className="om-reveal"><CalendarWidget /></div>
       </section>
 
-      {/* ── LOCATION ── */}
-      <section className="lx-section">
-        <div className="lx-section-header lx-reveal">
-          <div className="lx-divider"><span className="lx-dl" /><span className="lx-ds">✦</span><span className="lx-dl" /></div>
-          <h2 className="lx-section-title">Место</h2>
+      {/* ── МЕСТО ── */}
+      <section className="om-section">
+        <div className="om-sec-orn om-reveal">
+          <span className="om-ol" /><span className="om-od">◆</span><span className="om-ol" />
         </div>
-        <div className="lx-location lx-reveal">
-          <div className="lx-loc-icon">◈</div>
-          <div className="lx-loc-name">{COUPLE.venue}</div>
-          <div className="lx-loc-addr">{COUPLE.address}</div>
-          <div className="lx-loc-time">{COUPLE.date} · 17:00</div>
-          <button className="lx-loc-map">Открыть на карте</button>
+        <h2 className="om-sec-title om-reveal">Место проведения</h2>
+        <div className="om-place om-reveal">
+          <span className="om-place-icon">⚜</span>
+          <span className="om-place-name">{COUPLE.venue}</span>
+          <span className="om-place-addr">{COUPLE.address}</span>
+          <span className="om-place-when">{COUPLE.date} · 16:00</span>
+          <button className="om-place-map">Открыть на карте</button>
         </div>
       </section>
 
       {/* ── RSVP ── */}
-      <section className="lx-section lx-rsvp-section">
-        <div className="lx-section-header lx-reveal">
-          <div className="lx-divider"><span className="lx-dl" /><span className="lx-ds">✦</span><span className="lx-dl" /></div>
-          <h2 className="lx-section-title">Ваш ответ</h2>
+      <section className="om-band om-rsvp-band">
+        <div className="om-sec-orn om-reveal" style={{ "--ol-color": "rgba(200,160,60,0.4)" } as React.CSSProperties}>
+          <span className="om-ol om-ol-light" /><span className="om-od om-od-light">◆</span><span className="om-ol om-ol-light" />
         </div>
-        <p className="lx-rsvp-sub lx-reveal">Пожалуйста, подтвердите до 1 сентября 2026</p>
+        <h2 className="om-sec-title om-sec-title-light om-reveal">Подтвердите присутствие</h2>
+        <p className="om-rsvp-hint om-reveal">Пожалуйста, дайте нам знать до 15 июня 2026</p>
+
         {!rsvp ? (
-          <div className="lx-rsvp-btns lx-reveal">
-            <button className="lx-rsvp-yes" onClick={() => setRsvp("yes")}>Приду с радостью</button>
-            <button className="lx-rsvp-no" onClick={() => setRsvp("no")}>Не смогу прийти</button>
+          <div className="om-rsvp-btns om-reveal">
+            <button className="om-rsvp-yes" onClick={() => setRsvp("yes")}>С радостью приду</button>
+            <button className="om-rsvp-no" onClick={() => setRsvp("no")}>К сожалению, не смогу</button>
           </div>
         ) : (
-          <div className="lx-rsvp-thanks lx-reveal">
+          <div className="om-rsvp-thanks om-reveal">
             {rsvp === "yes"
-              ? <><span className="lx-thanks-star">✦</span><span>Прекрасно! Ждём вас.</span><span className="lx-thanks-star">✦</span></>
-              : <span>Жаль, что не выйдет. Благодарим за ответ.</span>
+              ? <><span className="om-thanks-heart">♥</span><span>Благодарим! Ждём вас 1 июля.</span><span className="om-thanks-heart">♥</span></>
+              : <span>Жаль, что не сможете быть с нами. Благодарим за ответ.</span>
             }
           </div>
         )}
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="lx-footer">
-        <div className="lx-divider lx-footer-div"><span className="lx-dl" /><span className="lx-ds">✦</span><span className="lx-dl" /></div>
-        <div className="lx-footer-monogram">
-          {COUPLE.him[0]}<span className="lx-footer-amp">&</span>{COUPLE.her[0]}
+      <footer className="om-footer">
+        <div className="om-sec-orn om-footer-orn">
+          <span className="om-ol om-ol-light" /><span className="om-od om-od-light">◆</span><span className="om-ol om-ol-light" />
         </div>
-        <p className="lx-footer-names">{COUPLE.him} & {COUPLE.her}</p>
-        <p className="lx-footer-date">{COUPLE.date}</p>
+        <div className="om-footer-mono">В<span className="om-footer-amp">&</span>А</div>
+        <p className="om-footer-names">{COUPLE.him} & {COUPLE.her}</p>
+        <p className="om-footer-date">{COUPLE.dateShort}</p>
+        <p className="om-footer-heart">♥</p>
       </footer>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400&family=Montserrat:wght@300;400;500&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --black:  #080808;
-          --dark:   #101010;
-          --dark2:  #161616;
-          --dark3:  #1a1710;
-          --gold:   #c8a84b;
-          --gold2:  #e4c97e;
-          --gold3:  #9a7830;
-          --text:   #e8dcc8;
-          --muted:  #6a5f47;
-          --border: rgba(200,168,75,0.16);
-          --border2:rgba(200,168,75,0.35);
+          --cream:   #f9f4ec;
+          --parch:   #f1e9d8;
+          --parch2:  #e8dcc8;
+          --gold:    #c9a84c;
+          --gold2:   #e6cc80;
+          --gold3:   #9a7735;
+          --brown:   #3a2718;
+          --brown2:  #5e4030;
+          --brown3:  #8a6545;
+          --text:    #2a1c10;
+          --muted:   #7a6050;
+          --shadow:  rgba(50,25,5,0.10);
+          --border:  rgba(200,168,75,0.22);
+          --border2: rgba(200,168,75,0.40);
         }
 
-        .lx-root {
-          background: var(--black); color: var(--text);
-          font-family: 'Cormorant Garamond', serif; overflow-x: hidden; min-height: 100vh;
+        .om-root {
+          background: var(--cream); color: var(--text);
+          font-family: 'EB Garamond', serif; overflow-x: hidden; min-height: 100vh;
         }
 
-        /* PARTICLES */
-        .particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
-        .particle {
-          position: absolute; bottom: -4px; border-radius: 50%; background: var(--gold);
-          animation: float-up linear infinite;
-        }
-        @keyframes float-up {
-          0%   { transform: translateY(0) scale(1); opacity: 0; }
-          10%  { opacity: 1; }
-          90%  { opacity: 0.5; }
-          100% { transform: translateY(-100vh) scale(0.2); opacity: 0; }
-        }
-
-        /* HERO */
-        .lx-hero {
+        /* ── HERO ── */
+        .om-hero {
           position: relative; min-height: 100vh;
           display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
-        .lx-hero-bg {
-          position: absolute; inset: 0; background-size: cover; background-position: center;
-          animation: lx-zoom 22s ease-in-out infinite alternate;
-          filter: brightness(0.3) saturate(0.6);
+        .om-hero-bg {
+          position: absolute; inset: 0; background-size: cover; background-position: center 30%;
+          animation: om-zoom 24s ease-in-out infinite alternate;
         }
-        @keyframes lx-zoom { from{transform:scale(1)} to{transform:scale(1.09)} }
-        .lx-hero-veil {
+        @keyframes om-zoom { from{transform:scale(1)} to{transform:scale(1.07)} }
+        .om-hero-veil {
           position: absolute; inset: 0;
-          background:
-            radial-gradient(ellipse at 50% 0%, rgba(200,168,75,0.07) 0%, transparent 55%),
-            linear-gradient(180deg, rgba(8,8,8,0.25) 0%, rgba(8,8,8,0.1) 40%, rgba(8,8,8,0.65) 100%);
+          background: linear-gradient(180deg,
+            rgba(20,10,3,0.50) 0%,
+            rgba(15,7,2,0.38) 45%,
+            rgba(20,10,3,0.62) 100%);
         }
-        .lx-hero-body {
-          position: relative; z-index: 2; text-align: center; padding: 40px 24px;
-          display: flex; flex-direction: column; align-items: center; gap: 18px;
+
+        /* Угловые украшения */
+        .om-corner {
+          position: absolute; width: 48px; height: 48px; z-index: 3;
+          border-color: rgba(200,168,75,0.55); border-style: solid; border-width: 0;
         }
-        .lx-tag {
+        .om-corner-tl { top: 28px; left: 28px; border-top-width: 1px; border-left-width: 1px; }
+        .om-corner-tr { top: 28px; right: 28px; border-top-width: 1px; border-right-width: 1px; }
+        .om-corner-bl { bottom: 28px; left: 28px; border-bottom-width: 1px; border-left-width: 1px; }
+        .om-corner-br { bottom: 28px; right: 28px; border-bottom-width: 1px; border-right-width: 1px; }
+
+        .om-hero-body {
+          position: relative; z-index: 2; text-align: center; padding: 48px 32px;
+          display: flex; flex-direction: column; align-items: center; gap: 16px;
+          max-width: 740px;
+        }
+        .om-hero-tag {
           font-family: 'Montserrat', sans-serif; font-size: 10px;
-          letter-spacing: 6px; text-transform: uppercase; color: var(--gold);
-          border: 1px solid var(--border2); padding: 7px 22px;
+          letter-spacing: 5px; text-transform: uppercase; color: rgba(220,190,130,0.85);
         }
-        .lx-hero-title {
-          display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center;
+        .om-hero-orn { display: flex; align-items: center; gap: 10px; width: 260px; }
+        .om-hl { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,168,75,0.6), transparent); }
+        .om-hd { color: rgba(200,168,75,0.8); font-size: 10px; flex-shrink: 0; }
+        .om-hero-names {
+          display: flex; align-items: center; justify-content: center;
+          gap: 16px; flex-wrap: wrap;
         }
-        .lx-name {
-          font-family: 'Playfair Display', serif;
-          font-size: clamp(44px, 9vw, 96px); font-weight: 400; color: var(--text);
-          text-shadow: 0 0 60px rgba(200,168,75,0.18); letter-spacing: 2px;
-        }
-        .lx-amp {
-          font-family: 'Playfair Display', serif;
-          font-size: clamp(32px, 6vw, 70px); font-style: italic; color: var(--gold); font-weight: 400;
-        }
-        .lx-hero-date {
-          font-family: 'Montserrat', sans-serif;
-          font-size: clamp(11px, 2vw, 15px); letter-spacing: 6px; text-transform: uppercase; color: var(--gold2);
-        }
-        .lx-hero-venue {
+        .om-hero-name {
           font-family: 'Cormorant Garamond', serif;
-          font-size: clamp(16px, 2.5vw, 22px); font-style: italic; color: rgba(232,220,200,0.45);
+          font-size: clamp(42px, 9vw, 92px); font-weight: 300;
+          color: #fff; letter-spacing: 2px;
+          text-shadow: 0 2px 32px rgba(0,0,0,0.5);
         }
-        .lx-hero-scroll {
-          display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 20px;
-          animation: scroll-bounce 2.5s ease-in-out infinite;
+        .om-hero-amp {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(30px, 6vw, 66px);
+          font-style: italic; color: var(--gold2); font-weight: 300;
         }
-        .lx-scroll-line { width: 1px; height: 44px; background: linear-gradient(var(--gold), transparent); }
-        .lx-scroll-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
-        @keyframes scroll-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(10px)} }
+        .om-hero-date {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(18px, 3vw, 26px);
+          color: rgba(220,190,130,0.92); letter-spacing: 4px;
+        }
+        .om-hero-venue {
+          font-family: 'Montserrat', sans-serif; font-size: 11px;
+          letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.5);
+        }
+        .om-hero-scroll {
+          display: flex; flex-direction: column; align-items: center; gap: 6px;
+          margin-top: 24px; animation: om-bounce 2.5s ease-in-out infinite;
+        }
+        .om-scroll-line { width: 1px; height: 36px; background: linear-gradient(rgba(200,168,75,0.5), transparent); }
+        .om-scroll-label {
+          font-family: 'Montserrat', sans-serif; font-size: 8px;
+          letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.35);
+        }
+        @keyframes om-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
 
-        /* DIVIDERS */
-        .lx-divider { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 360px; }
-        .lx-dl { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold3), transparent); }
-        .lx-ds { color: var(--gold3); font-size: 10px; flex-shrink: 0; }
+        /* ── MUSIC ── */
+        .om-music {
+          position: fixed; bottom: 24px; right: 24px; z-index: 100;
+          display: flex; align-items: center; gap: 10px;
+          background: rgba(249,244,236,0.97); border: 1px solid var(--border2);
+          border-radius: 40px; padding: 9px 15px;
+          box-shadow: 0 4px 20px var(--shadow); backdrop-filter: blur(10px);
+        }
+        .om-music-note { font-size: 17px; color: var(--gold); }
+        @keyframes om-note { 0%,100%{transform:scale(1) rotate(-5deg)} 50%{transform:scale(1.15) rotate(5deg)} }
+        .om-music-info { display: flex; flex-direction: column; gap: 3px; min-width: 90px; }
+        .om-music-title { font-family: 'Montserrat', sans-serif; font-size: 9px; letter-spacing: 1px; color: var(--brown2); }
+        .om-music-bar { height: 2px; background: rgba(180,140,60,0.15); border-radius: 1px; overflow: hidden; }
+        .om-music-fill { height: 100%; background: var(--gold); transition: width 0.5s linear; }
+        .om-music-btn {
+          background: var(--gold); color: var(--cream); border: none;
+          width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+          font-size: 11px; display: flex; align-items: center; justify-content: center;
+          transition: background 0.2s; flex-shrink: 0;
+        }
+        .om-music-btn:hover { background: var(--gold3); }
 
-        /* SECTIONS */
-        .lx-section { max-width: 860px; margin: 0 auto; padding: 90px 24px; text-align: center; }
-        .lx-section-header { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 48px; }
-        .lx-section-tag {
-          font-family: 'Montserrat', sans-serif; font-size: 10px;
-          letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px;
+        /* ── BANDS / SECTIONS ── */
+        .om-band { background: var(--parch); padding: 80px 24px; text-align: center; }
+        .om-section { max-width: 760px; margin: 0 auto; padding: 80px 24px; text-align: center; }
+        .om-sec-orn {
+          display: flex; align-items: center; justify-content: center;
+          gap: 12px; margin-bottom: 20px; max-width: 340px; margin-left: auto; margin-right: auto;
         }
-        .lx-section-title {
-          font-family: 'Playfair Display', serif;
-          font-size: clamp(28px, 5vw, 48px); font-weight: 400; color: var(--text); letter-spacing: 1px;
+        .om-ol { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold3), transparent); }
+        .om-od { color: var(--gold); font-size: 9px; flex-shrink: 0; }
+        .om-ol-light { background: linear-gradient(90deg, transparent, rgba(200,160,60,0.38), transparent); }
+        .om-od-light { color: rgba(200,160,60,0.6); }
+        .om-band-label {
+          font-family: 'Montserrat', sans-serif; font-size: 9px;
+          letter-spacing: 5px; text-transform: uppercase; color: var(--gold3); margin-bottom: 24px;
+        }
+        .om-sec-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(26px, 5vw, 44px); font-weight: 400; color: var(--brown);
+          margin-bottom: 36px; letter-spacing: 1px;
+        }
+        .om-sec-title-light { color: rgba(245,232,208,0.95); }
+
+        /* ── COUNTDOWN ── */
+        .om-count-band { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .om-countdown { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .om-count-wrap { display: flex; align-items: center; }
+        .om-count-box {
+          display: flex; flex-direction: column; align-items: center;
+          padding: 22px 20px; min-width: 86px;
+          background: var(--cream); border: 1px solid var(--border);
+          box-shadow: 0 2px 12px var(--shadow);
+        }
+        .om-count-num {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(38px, 7vw, 56px); font-weight: 300; color: var(--brown); line-height: 1;
+        }
+        .om-count-lbl {
+          font-family: 'Montserrat', sans-serif; font-size: 8px;
+          letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-top: 5px;
+        }
+        .om-count-colon {
+          font-family: 'Cormorant Garamond', serif; font-size: 32px;
+          color: var(--gold3); padding: 0 6px; align-self: flex-start; margin-top: 14px;
         }
 
-        /* COUNTDOWN */
-        .lx-count-section {
-          background: var(--dark2); padding: 80px 24px; text-align: center;
-          border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+        /* ── STORY ── */
+        .om-story {
+          max-width: 540px; margin: 0 auto 28px; display: flex; flex-direction: column; gap: 14px;
+          font-size: 18px; line-height: 1.85; color: var(--brown2); font-style: italic;
         }
-        .lx-countdown { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; }
-        .lx-count-item { display: flex; align-items: center; }
-        .lx-count-box {
-          display: flex; flex-direction: column; align-items: center; padding: 28px 24px; min-width: 96px;
-          background: var(--dark3); border: 1px solid var(--border); position: relative;
-        }
-        .lx-count-box::before {
-          content:''; position: absolute; inset: 4px; border: 1px solid var(--border); pointer-events: none;
-        }
-        .lx-count-num {
-          font-family: 'Playfair Display', serif;
-          font-size: clamp(38px, 7vw, 62px); font-weight: 400; color: var(--gold2); line-height: 1;
-        }
-        .lx-count-lbl {
-          font-family: 'Montserrat', sans-serif;
-          font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 8px;
-        }
-        .lx-count-sep {
-          font-family: 'Playfair Display', serif; font-size: 36px; color: var(--gold3);
-          padding: 0 4px; align-self: flex-start; margin-top: 18px;
+        .om-story-sig {
+          font-family: 'Cormorant Garamond', serif; font-size: 28px;
+          color: var(--gold3); font-style: italic;
         }
 
-        /* GALLERY */
-        .lx-gallery-section { background: var(--dark); max-width: 100%; padding: 90px 24px; }
-        .lx-gallery { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-        .lx-gal-main { position: relative; overflow: hidden; }
-        .lx-gal-img {
-          width: 100%; max-height: 520px; object-fit: cover; display: block;
-          animation: gal-fade 0.5s ease; filter: brightness(0.85) saturate(0.8);
+        /* ── GALLERY ── */
+        .om-gallery-band { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .om-gallery { display: flex; align-items: center; justify-content: center; gap: 12px; max-width: 700px; margin: 0 auto; }
+        .om-gal-frame { flex: 1; position: relative; overflow: hidden; }
+        .om-gal-img {
+          width: 100%; max-height: 480px; object-fit: cover; display: block;
+          animation: om-gal-fade 0.5s ease;
+          box-shadow: 0 8px 36px rgba(50,25,5,0.2);
         }
-        @keyframes gal-fade { from{opacity:0;transform:scale(1.03)} to{opacity:1;transform:scale(1)} }
-        .lx-gal-overlay {
+        @keyframes om-gal-fade { from{opacity:0;transform:scale(0.98)} to{opacity:1;transform:scale(1)} }
+        .om-gal-cap {
           position: absolute; bottom: 0; left: 0; right: 0;
-          background: linear-gradient(transparent, rgba(8,8,8,0.8));
-          padding: 40px 24px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px;
+          background: linear-gradient(transparent, rgba(20,10,3,0.65));
+          color: rgba(255,255,255,0.88); padding: 32px 16px 12px;
+          font-family: 'Cormorant Garamond', serif; font-size: 19px; font-style: italic; text-align: center;
         }
-        .lx-gal-caption {
-          font-family: 'Playfair Display', serif; font-size: 22px;
-          font-style: italic; color: rgba(232,220,200,0.85);
-        }
-        .lx-gal-nav { display: flex; align-items: center; gap: 14px; }
-        .lx-gal-btn {
+        .om-garrow {
           background: none; border: 1px solid var(--border2); color: var(--gold);
-          width: 40px; height: 40px; font-size: 22px; cursor: pointer;
+          width: 44px; height: 44px; font-size: 24px; cursor: pointer; flex-shrink: 0;
           transition: all 0.2s; display: flex; align-items: center; justify-content: center;
         }
-        .lx-gal-btn:hover { background: var(--gold); color: var(--black); border-color: var(--gold); }
-        .lx-gal-dots { display: flex; gap: 8px; }
-        .lx-dot { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--gold3); background: transparent; cursor: pointer; padding: 0; transition: all 0.2s; }
-        .lx-dot-active { background: var(--gold); border-color: var(--gold); }
-        .lx-gal-thumbs { display: flex; gap: 8px; }
-        .lx-thumb {
-          flex: 1; overflow: hidden; border: 1px solid var(--border);
-          opacity: 0.45; transition: all 0.25s; cursor: pointer; padding: 0; background: none;
+        .om-garrow:hover { background: var(--gold); color: var(--cream); }
+        .om-gdots { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .om-gdot {
+          width: 7px; height: 7px; border-radius: 50%;
+          border: 1px solid var(--gold3); background: transparent;
+          cursor: pointer; padding: 0; transition: background 0.2s;
         }
-        .lx-thumb img { width: 100%; height: 80px; object-fit: cover; display: block; }
-        .lx-thumb-active { opacity: 1; border-color: var(--gold); }
-        .lx-thumb:hover { opacity: 0.8; }
+        .om-gdot-on { background: var(--gold); border-color: var(--gold); }
 
-        /* SCHEDULE */
-        .lx-sch-section {
-          background: var(--dark3); max-width: 100%; padding: 90px 24px;
-          border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+        /* ── SCHEDULE ── */
+        .om-schedule { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; }
+        .om-sch-row {
+          display: grid; grid-template-columns: 64px 28px 1fr;
+          align-items: start; padding: 4px 0;
         }
-        .lx-sch-list { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }
-        .lx-sch-row {
-          display: flex; align-items: center; gap: 16px; padding: 20px 0;
-          border-bottom: 1px solid rgba(200,168,75,0.07);
+        .om-sch-time {
+          font-family: 'Cormorant Garamond', serif; font-size: 22px;
+          color: var(--gold); text-align: right; padding-top: 4px; font-weight: 500;
         }
-        .lx-sch-row:last-child { border-bottom: none; }
-        .lx-sch-icon { color: var(--gold3); font-size: 11px; width: 14px; text-align: center; flex-shrink: 0; }
-        .lx-sch-time {
-          font-family: 'Playfair Display', serif; font-size: 22px;
-          color: var(--gold); min-width: 60px; text-align: right; flex-shrink: 0;
+        .om-sch-middle { display: flex; flex-direction: column; align-items: center; padding: 0 8px; }
+        .om-sch-dot {
+          width: 10px; height: 10px; border-radius: 50%;
+          border: 2px solid var(--gold); background: var(--cream);
+          margin-top: 8px; flex-shrink: 0;
         }
-        .lx-sch-sep { width: 1px; height: 22px; background: var(--border2); flex-shrink: 0; }
-        .lx-sch-event { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--text); text-align: left; }
-
-        /* CALENDAR */
-        .lx-cal {
-          max-width: 380px; margin: 0 auto; background: var(--dark2);
-          border: 1px solid var(--border); padding: 32px; position: relative;
+        .om-sch-vline { flex: 1; width: 1px; background: rgba(200,168,75,0.22); min-height: 36px; }
+        .om-sch-info {
+          display: flex; flex-direction: column; gap: 2px; text-align: left;
+          padding-top: 4px; padding-bottom: 16px;
         }
-        .lx-cal::before { content:''; position: absolute; inset: 6px; border: 1px solid var(--border); pointer-events: none; }
-        .lx-cal-month {
-          font-family: 'Playfair Display', serif; font-size: 26px; color: var(--text);
-          text-align: center; margin-bottom: 24px; letter-spacing: 1px;
-        }
-        .lx-cal-head, .lx-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
-        .lx-cal-dh {
-          font-family: 'Montserrat', sans-serif; font-size: 8px;
-          letter-spacing: 1px; text-transform: uppercase; color: var(--muted); text-align: center; padding: 8px 0;
-        }
-        .lx-cal-cell {
-          aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-          font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--muted); position: relative;
-        }
-        .lx-cal-empty { opacity: 0; pointer-events: none; }
-        .lx-cal-wday {
-          background: var(--gold); color: var(--black); font-weight: 500; font-size: 16px;
-          box-shadow: 0 0 24px rgba(200,168,75,0.3);
-        }
-        .lx-cal-star { position: absolute; top: 1px; right: 2px; font-size: 7px; color: rgba(8,8,8,0.65); }
-        .lx-cal-add {
-          display: block; width: 100%; margin-top: 20px; background: none; border: none;
-          border-top: 1px solid var(--border); padding-top: 16px;
+        .om-sch-event { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--brown); }
+        .om-sch-desc {
           font-family: 'Montserrat', sans-serif; font-size: 9px;
-          letter-spacing: 3px; text-transform: uppercase; color: var(--gold3); cursor: pointer; transition: color 0.2s;
+          letter-spacing: 1px; color: var(--muted); text-transform: uppercase;
         }
-        .lx-cal-add:hover { color: var(--gold); }
 
-        /* LOCATION */
-        .lx-location {
-          max-width: 440px; margin: 0 auto; background: var(--dark2);
-          border: 1px solid var(--border); padding: 48px 32px;
-          display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative;
+        /* ── CALENDAR ── */
+        .om-cal-band { border-top: 1px solid var(--border); }
+        .om-cal {
+          max-width: 360px; margin: 0 auto;
+          background: var(--cream); border: 1px solid var(--border);
+          padding: 28px; box-shadow: 0 4px 20px var(--shadow); position: relative;
         }
-        .lx-location::before { content:''; position: absolute; inset: 6px; border: 1px solid var(--border); pointer-events: none; }
-        .lx-loc-icon { font-size: 36px; color: var(--gold); line-height: 1; }
-        .lx-loc-name { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--text); }
-        .lx-loc-addr { font-family: 'Montserrat', sans-serif; font-size: 11px; letter-spacing: 1px; color: var(--muted); text-align: center; line-height: 1.7; }
-        .lx-loc-time { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; color: var(--gold3); }
-        .lx-loc-map {
+        .om-cal-ornament {
+          display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+        }
+        .om-cal-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold3), transparent); }
+        .om-cal-gem { color: var(--gold); font-size: 8px; }
+        .om-cal-month {
+          font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--brown);
+          text-align: center; margin-bottom: 16px; letter-spacing: 1px;
+        }
+        .om-cal-head, .om-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+        .om-cal-dh {
+          font-family: 'Montserrat', sans-serif; font-size: 8px; letter-spacing: 1px;
+          text-transform: uppercase; color: var(--gold3); text-align: center; padding: 6px 0;
+        }
+        .om-cal-cell {
+          aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+          font-family: 'EB Garamond', serif; font-size: 13px; color: var(--muted); position: relative;
+        }
+        .om-cal-empty { opacity: 0; pointer-events: none; }
+        .om-cal-wday {
+          background: var(--gold); color: var(--cream) !important;
+          font-size: 15px; font-weight: 600;
+          box-shadow: 0 2px 10px rgba(200,168,75,0.35);
+        }
+        .om-cal-heart { position: absolute; top: 1px; right: 2px; font-size: 7px; color: rgba(255,255,255,0.7); }
+        .om-cal-btn {
+          display: block; width: 100%; margin-top: 16px; background: none; border: none;
+          border-top: 1px solid var(--border); padding-top: 14px;
+          font-family: 'Montserrat', sans-serif; font-size: 9px;
+          letter-spacing: 3px; text-transform: uppercase; color: var(--gold3);
+          cursor: pointer; transition: color 0.2s;
+        }
+        .om-cal-btn:hover { color: var(--gold); }
+
+        /* ── PLACE ── */
+        .om-place {
+          max-width: 420px; margin: 0 auto; background: var(--parch);
+          border: 1px solid var(--border); padding: 44px 28px;
+          box-shadow: 0 4px 20px var(--shadow);
+          display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .om-place-icon { font-size: 32px; color: var(--gold); }
+        .om-place-name { font-family: 'Cormorant Garamond', serif; font-size: 30px; color: var(--brown); letter-spacing: 1px; }
+        .om-place-addr {
+          font-family: 'Montserrat', sans-serif; font-size: 10px; letter-spacing: 1px;
+          color: var(--muted); text-align: center; line-height: 1.6;
+        }
+        .om-place-when { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; color: var(--gold3); }
+        .om-place-map {
           margin-top: 10px; background: none; border: 1px solid var(--border2);
-          color: var(--gold); padding: 10px 32px;
-          font-family: 'Montserrat', sans-serif; font-size: 9px; letter-spacing: 3px;
-          text-transform: uppercase; cursor: pointer; transition: all 0.25s;
+          color: var(--gold3); padding: 10px 28px;
+          font-family: 'Montserrat', sans-serif; font-size: 9px;
+          letter-spacing: 3px; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
         }
-        .lx-loc-map:hover { background: var(--gold); color: var(--black); border-color: var(--gold); }
+        .om-place-map:hover { background: var(--gold); color: var(--cream); border-color: var(--gold); }
 
-        /* RSVP */
-        .lx-rsvp-section {
-          background: var(--dark3); max-width: 100%; padding: 90px 24px;
-          border-top: 1px solid var(--border);
-        }
-        .lx-rsvp-sub {
+        /* ── RSVP ── */
+        .om-rsvp-band { background: var(--brown); border-top: 1px solid rgba(200,168,75,0.15); }
+        .om-rsvp-hint {
           font-family: 'Montserrat', sans-serif; font-size: 10px;
-          letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 40px;
+          letter-spacing: 2px; text-transform: uppercase; color: rgba(200,168,75,0.55);
+          margin-bottom: 36px;
         }
-        .lx-rsvp-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-        .lx-rsvp-yes {
-          background: var(--gold); color: var(--black); border: 1px solid var(--gold);
-          padding: 14px 40px; font-family: 'Montserrat', sans-serif; font-size: 10px;
-          letter-spacing: 4px; text-transform: uppercase; cursor: pointer; transition: all 0.25s; font-weight: 500;
+        .om-rsvp-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .om-rsvp-yes {
+          background: var(--gold); color: var(--brown); border: 1px solid var(--gold);
+          padding: 13px 36px; font-family: 'Montserrat', sans-serif; font-size: 10px;
+          letter-spacing: 3px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-weight: 500;
         }
-        .lx-rsvp-yes:hover { background: var(--gold2); border-color: var(--gold2); }
-        .lx-rsvp-no {
-          background: none; color: var(--muted); border: 1px solid var(--border);
-          padding: 14px 40px; font-family: 'Montserrat', sans-serif; font-size: 10px;
-          letter-spacing: 4px; text-transform: uppercase; cursor: pointer; transition: all 0.25s;
+        .om-rsvp-yes:hover { background: var(--gold2); border-color: var(--gold2); }
+        .om-rsvp-no {
+          background: none; color: rgba(200,168,75,0.5); border: 1px solid rgba(200,168,75,0.25);
+          padding: 13px 36px; font-family: 'Montserrat', sans-serif; font-size: 10px;
+          letter-spacing: 3px; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
         }
-        .lx-rsvp-no:hover { border-color: var(--border2); color: var(--text); }
-        .lx-rsvp-thanks {
-          display: flex; align-items: center; gap: 16px; justify-content: center;
-          font-family: 'Playfair Display', serif; font-size: 24px; font-style: italic;
-          color: var(--text); flex-wrap: wrap;
+        .om-rsvp-no:hover { color: var(--gold); border-color: rgba(200,168,75,0.5); }
+        .om-rsvp-thanks {
+          display: flex; align-items: center; gap: 14px; justify-content: center; flex-wrap: wrap;
+          font-family: 'Cormorant Garamond', serif; font-size: 22px; font-style: italic;
+          color: rgba(245,232,208,0.9);
         }
-        .lx-thanks-star { color: var(--gold); display: inline-block; animation: spin-slow 4s linear infinite; }
-        @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        .om-thanks-heart {
+          font-size: 26px; color: var(--gold);
+          animation: om-beat 1.3s ease-in-out infinite;
+        }
+        @keyframes om-beat { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
 
-        /* FOOTER */
-        .lx-footer {
-          text-align: center; padding: 60px 24px 80px; background: var(--black);
-          border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 12px;
+        /* ── FOOTER ── */
+        .om-footer {
+          background: var(--brown); text-align: center;
+          padding: 48px 24px 72px; border-top: 1px solid rgba(200,168,75,0.12);
+          display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
-        .lx-footer-div { max-width: 300px; width: 100%; }
-        .lx-footer-monogram {
-          font-family: 'Playfair Display', serif; font-size: 54px; color: var(--gold);
-          letter-spacing: 4px; text-shadow: 0 0 40px rgba(200,168,75,0.22);
+        .om-footer-orn { max-width: 280px; width: 100%; margin-bottom: 8px; }
+        .om-footer-mono {
+          font-family: 'Cormorant Garamond', serif; font-size: 56px;
+          color: var(--gold); letter-spacing: 6px; font-weight: 300;
+          text-shadow: 0 0 36px rgba(200,168,75,0.2);
         }
-        .lx-footer-amp { font-style: italic; color: var(--gold3); margin: 0 6px; }
-        .lx-footer-names { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-style: italic; color: rgba(232,220,200,0.55); }
-        .lx-footer-date { font-family: 'Montserrat', sans-serif; font-size: 9px; letter-spacing: 5px; text-transform: uppercase; color: var(--muted); }
+        .om-footer-amp { font-style: italic; color: var(--gold3); margin: 0 4px; }
+        .om-footer-names {
+          font-family: 'Cormorant Garamond', serif; font-size: 22px;
+          font-style: italic; color: rgba(245,232,208,0.65);
+        }
+        .om-footer-date {
+          font-family: 'Montserrat', sans-serif; font-size: 9px;
+          letter-spacing: 5px; text-transform: uppercase; color: rgba(200,168,75,0.45);
+        }
+        .om-footer-heart {
+          font-size: 18px; color: var(--gold);
+          animation: om-beat 2s ease-in-out infinite;
+        }
 
-        /* REVEAL */
-        .lx-reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.9s ease, transform 0.9s ease; }
-        .lx-revealed { opacity: 1; transform: translateY(0); }
+        /* ── REVEAL ── */
+        .om-reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.85s ease, transform 0.85s ease; }
+        .om-revealed { opacity: 1; transform: translateY(0); }
 
         @media (max-width: 600px) {
-          .lx-count-box { min-width: 70px; padding: 16px 10px; }
-          .lx-count-num { font-size: 34px; }
-          .lx-count-sep { font-size: 26px; margin-top: 12px; }
-          .lx-gal-thumbs { display: none; }
-          .lx-location, .lx-cal { padding: 24px 16px; }
-          .lx-sch-time { font-size: 18px; min-width: 50px; }
+          .om-music { bottom: 12px; right: 12px; }
+          .om-music-info { min-width: 70px; }
+          .om-corner { width: 32px; height: 32px; }
+          .om-corner-tl, .om-corner-tr { top: 16px; }
+          .om-corner-bl, .om-corner-br { bottom: 16px; }
+          .om-corner-tl, .om-corner-bl { left: 16px; }
+          .om-corner-tr, .om-corner-br { right: 16px; }
+          .om-count-box { min-width: 70px; padding: 16px 10px; }
+          .om-count-num { font-size: 34px; }
+          .om-count-colon { font-size: 24px; margin-top: 10px; }
+          .om-gallery { gap: 6px; }
+          .om-garrow { width: 36px; height: 36px; font-size: 20px; }
+          .om-sch-row { grid-template-columns: 52px 24px 1fr; }
+          .om-cal { padding: 18px; }
+          .om-place { padding: 28px 16px; }
         }
       `}</style>
     </div>
